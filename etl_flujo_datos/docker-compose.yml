@@ -1,0 +1,31 @@
+services:
+  # Servicio base para desarrollo y tests
+  etl:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: etl-pyspark:latest
+    volumes:
+      - ./src:/app/src
+      - ./config:/app/config
+      - ./data:/app/data
+      - ./tests:/app/tests
+    working_dir: /app
+
+  # Servicio para ejecutar el ETL completo
+  pyspark-etl:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: etl-pyspark:latest
+    container_name: pyspark-etl
+    volumes:
+      - ./src:/app/src
+      - ./config:/app/config
+      - ./data:/app/data
+    working_dir: /app
+    command: ["python", "src/main.py", "--config", "config/config.yaml"]
+
+networks:
+  default:
+    name: etl-network

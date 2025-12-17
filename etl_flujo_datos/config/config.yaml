@@ -1,0 +1,73 @@
+# ETL Configuration - OmegaConf
+# Flujo de Datos - Entregas de Productos
+
+etl:
+  name: "etl_entregas_productos"
+  version: "1.0.0"
+  description: "ETL para procesamiento de entregas de productos"
+
+# Paths de entrada y salida
+paths:
+  input_file: "data/input/global_mobility_data_entrega_productos.csv"
+  output_base: "data/processed"
+  # El output final será: output_base/${process_date}/
+
+# Filtros parametrizables
+filters:
+  # Rango de fechas para procesar (formato: YYYY-MM-DD)
+  start_date: "2025-01-01"
+  end_date: "2025-06-30"
+  # País a procesar (null para todos los países)
+  # Valores válidos: GT, PE, EC, SV, HN, JM
+  country: null
+
+# Configuración de transformaciones
+transformations:
+  # Conversión de unidades
+  unit_conversion:
+    # CS (cajas) contiene 20 unidades (ST)
+    cs_to_st_factor: 20
+    # Unidad estándar de salida
+    standard_unit: "ST"
+  
+  # Clasificación de tipos de entrega
+  delivery_types:
+    # Entregas de rutina
+    routine:
+      - "ZPRE"
+      - "ZVE1"
+    # Entregas con bonificaciones
+    bonus:
+      - "Z04"
+      - "Z05"
+
+# Configuración de calidad de datos
+data_quality:
+  # Eliminar registros con material vacío
+  remove_empty_material: true
+  # Eliminar registros duplicados
+  remove_duplicates: true
+  # Convertir precios con notación científica (0E-18) a 0
+  fix_scientific_notation: true
+  # Solo incluir tipos de entrega válidos (routine + bonus)
+  filter_valid_delivery_types: true
+
+# Configuración de Spark
+spark:
+  app_name: "ETL_Entregas_Productos"
+  master: "local[*]"
+  config:
+    spark.sql.shuffle.partitions: "4"
+    spark.driver.memory: "1g"
+    spark.executor.memory: "1g"
+
+# Configuración de salida
+output:
+  # Formato de salida: parquet, csv, json
+  format: "parquet"
+  # Modo de escritura: overwrite, append, error, ignore
+  mode: "overwrite"
+  # Columna de partición
+  partition_column: "process_date"
+  # Compresión para parquet
+  compression: "snappy"
