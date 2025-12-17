@@ -183,31 +183,49 @@ ls data/input/
 
 ## Ejecución
 
-### Opción 1: Docker Compose (Recomendado)
+> **Nota**: Este proyecto utiliza PySpark en modo local embebido (`local[*]`), ideal para desarrollo y procesamiento en una sola máquina. Para clusters distribuidos, se requiere configuración adicional.
+
+### Opción 1: Usando Makefile (Recomendado)
 
 ```bash
-# Iniciar infraestructura Spark
-docker compose up -d spark-master spark-worker
+# Ver comandos disponibles
+make help
 
-# Verificar que los servicios estén corriendo
-docker compose ps
+# Construir imagen Docker (primera vez)
+make build
 
-# Ejecutar el ETL (con configuración por defecto)
-docker compose --profile run up etl-runner
+# Ejecutar el ETL con configuración por defecto
+make run
 
-# O ejecutar con parámetros personalizados
-docker compose run --rm etl-runner bash -c "
-  pip install -r requirements.txt &&
-  spark-submit --master spark://spark-master:7077 \
-    src/main.py --config config/config.yaml \
-    --start-date 2025-01-01 --end-date 2025-06-30 --country GT
-"
+# Ejecutar con parámetros personalizados
+make run-custom START=2025-01-01 END=2025-06-30 COUNTRY=GT
 
-# Detener infraestructura
-docker compose down
+# Iniciar contenedor de desarrollo interactivo
+make dev
 ```
 
-### Opción 2: Ejecución Local
+### Opción 2: Docker Compose Directo
+
+```bash
+# Construir imagen
+docker compose build
+
+# Ejecutar ETL con configuración por defecto
+docker compose run --rm etl-run
+
+# Ejecutar con parámetros personalizados
+docker compose run --rm etl-dev python src/main.py \
+  --config config/config.yaml \
+  --start-date 2025-01-01 --end-date 2025-06-30 --country GT
+
+# Iniciar contenedor de desarrollo interactivo
+docker compose run --rm etl-dev bash
+
+# Limpiar contenedores
+docker compose down --remove-orphans
+```
+
+### Opción 3: Ejecución Local (sin Docker)
 
 ```bash
 # Instalar dependencias
@@ -274,9 +292,12 @@ make clean
 ### Usando docker-compose directamente
 
 ```bash
-docker compose run --rm etl pytest tests/ -v
-docker compose run --rm etl pytest tests/test_config_loader.py -v
-docker compose run --rm etl pytest tests/test_transformer.py -v
+# Ejecutar todos los tests
+docker compose run --rm etl-test
+
+# Ejecutar tests específicos
+docker compose run --rm etl-dev pytest tests/test_config_loader.py -v
+docker compose run --rm etl-dev pytest tests/test_transformer.py -v
 ```
 
 ### Estructura de Tests

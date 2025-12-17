@@ -1,30 +1,48 @@
 services:
-  # Servicio base para desarrollo y tests
-  etl:
+  # Servicio para desarrollo interactivo y tests
+  etl-dev:
     build:
       context: .
       dockerfile: Dockerfile
     image: etl-pyspark:latest
+    container_name: etl-dev
     volumes:
       - ./src:/app/src
       - ./config:/app/config
       - ./data:/app/data
       - ./tests:/app/tests
     working_dir: /app
+    stdin_open: true
+    tty: true
 
-  # Servicio para ejecutar el ETL completo
-  pyspark-etl:
+  # Servicio para ejecutar el ETL
+  etl-run:
     build:
       context: .
       dockerfile: Dockerfile
     image: etl-pyspark:latest
-    container_name: pyspark-etl
+    container_name: etl-run
     volumes:
       - ./src:/app/src
       - ./config:/app/config
       - ./data:/app/data
     working_dir: /app
     command: ["python", "src/main.py", "--config", "config/config.yaml"]
+
+  # Servicio para ejecutar tests
+  etl-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: etl-pyspark:latest
+    container_name: etl-test
+    volumes:
+      - ./src:/app/src
+      - ./config:/app/config
+      - ./data:/app/data
+      - ./tests:/app/tests
+    working_dir: /app
+    command: ["pytest", "tests/", "-v"]
 
 networks:
   default:
